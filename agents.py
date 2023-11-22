@@ -9,6 +9,7 @@ from torch.distributions.categorical import Categorical
 
 from model import CnnActorCriticNetwork, RNDModel
 from utils import global_grad_norm_
+import wandb
 
 
 class RNDAgent(object):
@@ -77,7 +78,7 @@ class RNDAgent(object):
 
         return intrinsic_reward.data.cpu().numpy()
 
-    def train_model(self, s_batch, target_ext_batch, target_int_batch, y_batch, adv_batch, next_obs_batch, old_policy):
+    def train_model(self, s_batch, target_ext_batch, target_int_batch, y_batch, adv_batch, next_obs_batch, old_policy, global_update):
         s_batch = torch.FloatTensor(s_batch).to(self.device)
         target_ext_batch = torch.FloatTensor(target_ext_batch).to(self.device)
         target_int_batch = torch.FloatTensor(target_int_batch).to(self.device)
@@ -106,6 +107,7 @@ class RNDAgent(object):
                 predict_next_state_feature, target_next_state_feature = self.rnd(next_obs_batch[sample_idx])
 
                 forward_loss = forward_mse(predict_next_state_feature, target_next_state_feature.detach()).mean(-1)
+                log_rnd_loss = forward_loss
                 # Proportion of exp used for predictor update
                 mask = torch.rand(len(forward_loss)).to(self.device)
                 mask = (mask < self.update_proportion).type(torch.FloatTensor).to(self.device)
@@ -134,6 +136,13 @@ class RNDAgent(object):
 
                 self.optimizer.zero_grad()
                 loss = actor_loss + 0.5 * critic_loss - self.ent_coef * entropy + forward_loss
+                log_loss = actor_loss + 0.5 * critic_loss
                 loss.backward()
-                global_grad_norm_(list(self.model.parameters())+list(self.rnd.predictor.parameters()))
+                grad_before_clip = global_grad_norm_(list(self.model.parameters())+list(self.rnd.predictor.parameters()))
                 self.optimizer.step()
+        
+        wandb.log({"optimize/loss": log_loss,
+            "optimize/rnd_loss": log_rnd_loss,
+            "optimize/grad_before_clip": grad_before_clip,
+            "optimize/step": global_update * self.epoch
+            })

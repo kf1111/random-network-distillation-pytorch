@@ -49,7 +49,7 @@ def unwrap(env):
     else:
         return env
 
-
+# frame skip　と　複数のフレーム中に大きいmax？を取る処理
 class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env, is_render, skip=4):
         """Return only every `skip`-th frame"""

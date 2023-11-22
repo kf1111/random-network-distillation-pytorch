@@ -3,8 +3,8 @@ from envs import *
 from utils import *
 from config import *
 from torch.multiprocessing import Pipe
+import wandb
 
-from tensorboardX import SummaryWriter
 
 import numpy as np
 
@@ -29,13 +29,12 @@ def main():
 
     env.close()
 
-    is_load_model = True
+    is_load_model = False
     is_render = False
     model_path = 'models/{}.model'.format(env_id)
     predictor_path = 'models/{}.pred'.format(env_id)
     target_path = 'models/{}.target'.format(env_id)
 
-    writer = SummaryWriter()
 
     use_cuda = default_config.getboolean('UseGPU')
     use_gae = default_config.getboolean('UseGAE')
@@ -93,6 +92,12 @@ def main():
         use_gae=use_gae,
         use_noisy_net=use_noisy_net
     )
+    
+    wandb.init(
+        project = f'{train_method}-1120',
+        name = now.strftime('%Y%m%d%H%M'),
+        dir = f'/tmp/wandb{now.strftime("%Y%m%d%H%M")}',
+        config = default_config)
 
     if is_load_model:
         print('load model...')
@@ -200,9 +205,12 @@ def main():
             sample_step += 1
             if real_dones[sample_env_idx]:
                 sample_episode += 1
-                writer.add_scalar('data/reward_per_epi', sample_rall, sample_episode)
-                writer.add_scalar('data/reward_per_rollout', sample_rall, global_update)
-                writer.add_scalar('data/step', sample_step, sample_episode)
+                wandb.log({
+                    "train/reward": sample_rall,
+                    "train/duration": sample_step,
+                    "train/episode": sample_episode,
+                    "optimize/step": global_update * agent.epoch
+                    })
                 sample_rall = 0
                 sample_step = 0
                 sample_i_rall = 0
@@ -232,13 +240,17 @@ def main():
 
         # normalize intrinsic reward
         total_int_reward /= np.sqrt(reward_rms.var)
-        writer.add_scalar('data/int_reward_per_epi', np.sum(total_int_reward) / num_worker, sample_episode)
-        writer.add_scalar('data/int_reward_per_rollout', np.sum(total_int_reward) / num_worker, global_update)
+        
         # -------------------------------------------------------------------------------------------
 
-        # logging Max action probability
-        writer.add_scalar('data/max_prob', softmax(total_logging_policy).max(1).mean(), sample_episode)
-
+        # logging Max action probability and int_reward       
+        wandb.log({
+            "data/max_prob": softmax(total_logging_policy).max(1).mean(),
+            "data/mean_batch_int_reward": np.sum(total_int_reward) / num_worker,
+            "train/episode": sample_episode,
+            "optimize/step": global_update * agent.epoch
+            })
+        
         # Step 3. make target and advantage
         # extrinsic reward calculate
         ext_target, ext_adv = make_train_data(total_reward,
@@ -268,7 +280,7 @@ def main():
         # Step 5. Training!
         agent.train_model(np.float32(total_state) / 255., ext_target, int_target, total_action,
                           total_adv, ((total_next_obs - obs_rms.mean) / np.sqrt(obs_rms.var)).clip(-5, 5),
-                          total_policy)
+                          total_policy, global_update)
 
         if global_step % (num_worker * num_step * 100) == 0:
             print('Now Global Step :{}'.format(global_step))
