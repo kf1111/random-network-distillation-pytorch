@@ -4,7 +4,7 @@ from utils import *
 from config import *
 from torch.multiprocessing import Pipe
 import wandb
-import os, now, shutil
+import os, datetime, shutil
 
 import numpy as np
 
@@ -93,6 +93,8 @@ def main():
         use_noisy_net=use_noisy_net
     )
     
+    wandb.login()
+    now = datetime.datetime.now()
     os.makedirs(f'/tmp/wandb{now.strftime("%Y%m%d%H%M")}', exist_ok=True)
     wandb.init(
         project = f'{train_method}-1120',
