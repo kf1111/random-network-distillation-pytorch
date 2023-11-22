@@ -4,7 +4,7 @@ from utils import *
 from config import *
 from torch.multiprocessing import Pipe
 import wandb
-
+import os, now, shutil
 
 import numpy as np
 
@@ -93,6 +93,7 @@ def main():
         use_noisy_net=use_noisy_net
     )
     
+    os.makedirs(f'/tmp/wandb{now.strftime("%Y%m%d%H%M")}', exist_ok=True)
     wandb.init(
         project = f'{train_method}-1120',
         name = now.strftime('%Y%m%d%H%M'),
@@ -287,7 +288,16 @@ def main():
             torch.save(agent.model.state_dict(), model_path)
             torch.save(agent.rnd.predictor.state_dict(), predictor_path)
             torch.save(agent.rnd.target.state_dict(), target_path)
-
+        
 
 if __name__ == '__main__':
     main()
+    wandb.finish()
+    # ローカルのWandBファイルを削除
+    shutil.rmtree(f'/tmp/wandb{now.strftime("%Y%m%d%H%M")}', ignore_errors=True)
+
+    # ディレクトリが存在するか確認
+    if not os.path.exists(f'/tmp/wandb{now.strftime("%Y%m%d%H%M")}'):
+        print("wandb local file successfully deleted")
+    else:
+        print("wandb local file still exists")
