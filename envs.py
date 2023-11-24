@@ -199,7 +199,7 @@ class AtariEnvironment(Environment):
         return self.history[:, :, :]
 
     def pre_proc(self, X):
-        X = np.array(Image.fromarray(X).convert('L')).astype('float32')
+        X = np.array(Image.fromarray(X).convert('L')).astype('float32') #グレースケール：convert('L')
         x = cv2.resize(X, (self.h, self.w))
         return x
 
