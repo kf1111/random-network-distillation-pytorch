@@ -51,15 +51,15 @@ def main():
     batch_size = int(num_step * num_worker / mini_batch)
     learning_rate = float(default_config['LearningRate'])
     entropy_coef = float(default_config['Entropy'])
-    gamma = float(default_config['Gamma'])
-    int_gamma = float(default_config['IntGamma'])
-    clip_grad_norm = float(default_config['ClipGradNorm'])
-    ext_coef = float(default_config['ExtCoef'])
-    int_coef = float(default_config['IntCoef'])
+    gamma = float(default_config['ext_GAMMA'])
+    int_gamma = float(default_config['int_GAMMA'])
+    clip_grad_norm = float(default_config['grad_clip']) #?未実装
+    ext_coef = float(default_config['Coef_ext_reward'])
+    int_coef = float(default_config['Coef_int_reward'])
 
     sticky_action = default_config.getboolean('StickyAction')
     action_prob = float(default_config['ActionProb'])
-    life_done = default_config.getboolean('LifeDone')
+    life_done = default_config.getboolean('LifeDone') #マリオ環境のみで使用される
 
     reward_rms = RunningMeanStd()
     obs_rms = RunningMeanStd(shape=(1, 1, 84, 84))
@@ -96,11 +96,12 @@ def main():
     wandb.login()
     now = datetime.datetime.now()
     os.makedirs(f'/tmp/wandb{now.strftime("%Y%m%d%H%M")}', exist_ok=True)
+    default_config_dict = dict(default_config)
     wandb.init(
         project = f'{train_method}-1120',
         name = now.strftime('%Y%m%d%H%M'),
         dir = f'/tmp/wandb{now.strftime("%Y%m%d%H%M")}',
-        config = default_config)
+        config = default_config_dict)
 
     if is_load_model:
         print('load model...')
