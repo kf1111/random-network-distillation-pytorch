@@ -18,15 +18,15 @@ def main():
     if env_type == 'mario':
         env = BinarySpaceToDiscreteSpaceEnv(gym_super_mario_bros.make(env_id), COMPLEX_MOVEMENT)
     elif env_type == 'atari':
-        if game_name.startswith('procgen:'):
+        if env_id.startswith('procgen:'):
             start_level = default_config['Start_level']
             num_levels = default_config['Num_levels']
             mode = default_config['Distribution_mode']
             if mode == 'exploration' :
-                env = gym.make(game_name, distribution_mode=mode)
+                env = gym.make(env_id, distribution_mode=mode)
             else:
-                env = gym.make(game_name,start_level=start_level, num_levels=num_levels, distribution_mode=mode)
-            game_name = game_name.replace('procgen:', '')
+                env = gym.make(env_id,start_level=start_level, num_levels=num_levels, distribution_mode=mode)
+            env_id = env_id.replace('procgen:', '')
         else:
             env = gym.make(env_id)
     else:
@@ -41,9 +41,11 @@ def main():
 
     is_load_model = False
     is_render = False
-    model_path = 'models/{}.model'.format(env_id)
-    predictor_path = 'models/{}.pred'.format(env_id)
-    target_path = 'models/{}.target'.format(env_id)
+    now = datetime.datetime.now()
+    new_dir_path = './output/' + env_id + '_' + train_method + '_' + now.strftime('%Y%m%d%H%M')
+    model_path = 'models/{}/{}.model'.format(new_dir_path, env_id)
+    predictor_path = 'models/{}/{}.pred'.format(new_dir_path, env_id)
+    target_path = 'models/{}/{}.target'.format(new_dir_path, env_id)
 
 
     use_cuda = default_config.getboolean('UseGPU')
@@ -109,7 +111,6 @@ def main():
     )
     
     wandb.login()
-    now = datetime.datetime.now()
     os.makedirs(f'/tmp/wandb{now.strftime("%Y%m%d%H%M")}', exist_ok=True)
     default_config_dict = dict(default_config)
     wandb.init(
