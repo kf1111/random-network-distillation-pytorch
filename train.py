@@ -42,11 +42,11 @@ def main():
     is_load_model = False
     is_render = False
     now = datetime.datetime.now()
-    new_dir_path = './output/' + env_id + '_' + train_method + '_' + now.strftime('%Y%m%d%H%M')
+    new_dir_path = './models/' + env_id + '_' + train_method + '_' + now.strftime('%Y%m%d%H%M')
     os.makedirs(new_dir_path, exist_ok=True)
-    model_path = 'models/{}/{}.model'.format(new_dir_path, env_id)
-    predictor_path = 'models/{}/{}.pred'.format(new_dir_path, env_id)
-    target_path = 'models/{}/{}.target'.format(new_dir_path, env_id)
+    model_path = '{}/{}.model'.format(new_dir_path, env_id)
+    predictor_path = '{}/{}.pred'.format(new_dir_path, env_id)
+    target_path = '{}/{}.target'.format(new_dir_path, env_id)
 
 
     use_cuda = default_config.getboolean('UseGPU')
