@@ -19,8 +19,8 @@ def main():
         env = BinarySpaceToDiscreteSpaceEnv(gym_super_mario_bros.make(env_id), COMPLEX_MOVEMENT)
     elif env_type == 'atari':
         if env_id.startswith('procgen:'):
-            start_level = default_config['Start_level']
-            num_levels = default_config['Num_levels']
+            start_level = int(default_config['Start_level'])
+            num_levels = int(default_config['Num_levels'])
             mode = default_config['Distribution_mode']
             if mode == 'exploration' :
                 env = gym.make(env_id, distribution_mode=mode)
@@ -56,7 +56,8 @@ def main():
     num_worker = int(default_config['NumEnv'])
 
     num_step = int(default_config['NumStep'])
-
+    
+    stateStack_size = int(default_config['StateStackSize'])
     ppo_eps = float(default_config['PPOEps'])
     epoch = int(default_config['Epoch'])
     mini_batch = int(default_config['MiniBatch'])
@@ -138,7 +139,7 @@ def main():
     child_conns = []
     for idx in range(num_worker):
         parent_conn, child_conn = Pipe()
-        work = env_type(env_id, is_render, idx, child_conn, sticky_action=sticky_action, p=action_prob,
+        work = env_type(env_id, is_render, idx, child_conn, history_size=stateStack_size, h=state_height, w=state_width, sticky_action=sticky_action, p=action_prob,
                         life_done=life_done)
         work.start()
         works.append(work)

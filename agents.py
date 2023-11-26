@@ -49,7 +49,7 @@ class RNDAgent(object):
         self.update_proportion = update_proportion
         self.device = torch.device('cuda' if use_cuda else 'cpu')
 
-        self.rnd = RNDModel(input_size, output_size)
+        self.rnd = RNDModel(input_size, output_size, h, w)
         self.optimizer = optim.Adam(list(self.model.parameters()) + list(self.rnd.predictor.parameters()),
                                     lr=learning_rate)
         self.rnd = self.rnd.to(self.device)

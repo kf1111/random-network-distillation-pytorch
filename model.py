@@ -70,6 +70,8 @@ class Flatten(nn.Module):
     def forward(self, input):
         return input.view(input.size(0), -1)
 
+def conv2d_size_out(size, kernel_size, stride):
+    return (size - (kernel_size - 1) - 1) // stride  + 1
 
 class CnnActorCriticNetwork(nn.Module):
     def __init__(self, input_size, output_size, h, w, use_noisy_net=False):
@@ -80,9 +82,6 @@ class CnnActorCriticNetwork(nn.Module):
             linear = NoisyLinear
         else:
             linear = nn.Linear
-        
-        def conv2d_size_out(size, kernel_size, stride):
-            return (size - (kernel_size - 1) - 1) // stride  + 1
         
         convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w, 8, 4), 4, 2), 3, 1)
         convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h, 8, 4), 4, 2), 3, 1)        
@@ -165,13 +164,16 @@ class CnnActorCriticNetwork(nn.Module):
 
 
 class RNDModel(nn.Module):
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size, output_size, h, w):
         super(RNDModel, self).__init__()
 
         self.input_size = input_size
         self.output_size = output_size
+        
+        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w, 8, 4), 4, 2), 3, 1)
+        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h, 8, 4), 4, 2), 3, 1)
 
-        feature_output = 7 * 7 * 64
+        feature_output = convh * convw * 64
         self.predictor = nn.Sequential(
             nn.Conv2d(
                 in_channels=1,
