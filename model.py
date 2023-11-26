@@ -72,7 +72,7 @@ class Flatten(nn.Module):
 
 
 class CnnActorCriticNetwork(nn.Module):
-    def __init__(self, input_size, output_size, use_noisy_net=False):
+    def __init__(self, input_size, output_size, h, w, use_noisy_net=False):
         super(CnnActorCriticNetwork, self).__init__()
 
         if use_noisy_net:
@@ -80,6 +80,12 @@ class CnnActorCriticNetwork(nn.Module):
             linear = NoisyLinear
         else:
             linear = nn.Linear
+        
+        def conv2d_size_out(size, kernel_size, stride):
+            return (size - (kernel_size - 1) - 1) // stride  + 1
+        
+        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w, 8, 4), 4, 2), 3, 1)
+        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h, 8, 4), 4, 2), 3, 1)        
 
         self.feature = nn.Sequential(
             nn.Conv2d(
@@ -102,7 +108,7 @@ class CnnActorCriticNetwork(nn.Module):
             nn.ReLU(),
             Flatten(),
             linear(
-                7 * 7 * 64,
+                convh * convw * 64,
                 256),
             nn.ReLU(),
             linear(

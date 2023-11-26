@@ -17,6 +17,8 @@ class RNDAgent(object):
             self,
             input_size,
             output_size,
+            h,
+            w,
             num_env,
             num_step,
             gamma,
@@ -31,7 +33,7 @@ class RNDAgent(object):
             use_gae=True,
             use_cuda=False,
             use_noisy_net=False):
-        self.model = CnnActorCriticNetwork(input_size, output_size, use_noisy_net)
+        self.model = CnnActorCriticNetwork(input_size, output_size, h, w, use_noisy_net)
         self.num_env = num_env
         self.output_size = output_size
         self.input_size = input_size

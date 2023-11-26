@@ -94,6 +94,8 @@ def main():
     agent = agent(
         input_size,
         output_size,
+        state_height,
+        state_height,
         num_worker,
         num_step,
         gamma,
